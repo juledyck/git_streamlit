@@ -108,7 +108,7 @@ if(st.button("Enter")):
 
     englischtext = my_chat(model, prompt)
     tostring = "".join(englischtext)
-    recipe_prompt = f"""Use these following examples for how the output should look after an input.
+    recipe_prompt = f"""I want you to write me a recipe using a prompt with guidelines that I can use in a cookbook. Use these following examples for how the output should look after an input.
 
     Example 1:
     Input: "Please create a dessert recipe for 8 people with a name that accurately describes the end result based on the ingredients. This dish should be low-carb. Give me a list of the ingredients and instructions which should be written in English. Additionally, I am allergic to almonds. Furthermore, I would like to make something with chocolate."
@@ -202,7 +202,7 @@ if(st.button("Enter")):
     
     This recipe provides a balanced meal with healthy fats, fiber, and protein, making it a great start to your day! Enjoy your creamy oatmeal!
 
-    Input: "{tostring}"
+    This is the prompt you should use: "{tostring}"
     """
 
     recipe = ""
