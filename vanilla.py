@@ -329,7 +329,7 @@ if st.session_state['authentication_status']:
             5. Mit einem Pürierstab die Suppe cremig pürieren.
             6. Sahne hinzufügen und mit Salz, Pfeffer und Muskatnuss abschmecken.
             7. Genießen!"""
-        generate_recipe("kürbissuppe.jpg", "Kürbissuppe",  kürbissuppe, "1", recipe_key="kürbissuppe")
+        generate_recipe("kuerbissuppe.jpg", "Kürbissuppe",  kürbissuppe, "1", recipe_key="kürbissuppe")
 
     with col3:
         lammeintopf = """
