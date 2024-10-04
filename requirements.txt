@@ -1,0 +1,8 @@
+streamlit
+streamlit-authenticator
+PyYAML
+requests
+openai
+bcrypt
+streamlit-extras
+ollama
