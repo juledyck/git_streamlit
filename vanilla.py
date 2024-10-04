@@ -9,7 +9,6 @@ import bcrypt
 from openai import OpenAI
 from yaml.loader import SafeLoader
 from streamlit_extras.let_it_rain import rain
-from ollama import chat
 from streamlit_authenticator.utilities import (CredentialsError,
                                                ForgotError,
                                                Hasher,
