@@ -307,7 +307,7 @@ if st.session_state['authentication_status']:
             4. Optional Sojasauce, Gemüsebrühe oder Fleischbrühe hinzugeben.
             5. Würzen und vom Herd nehmen, bevor das Gemüse matschig wird.
             6. Genießen!"""
-        generate_recipe("images/hackpfanne.jpg","Hackpfanne", hackpfanne, "1", recipe_key="Hackpfanne")
+        generate_recipe("hackpfanne.jpg","Hackpfanne", hackpfanne, "1", recipe_key="Hackpfanne")
 
     with col2:
         kürbissuppe = """
@@ -329,7 +329,7 @@ if st.session_state['authentication_status']:
             5. Mit einem Pürierstab die Suppe cremig pürieren.
             6. Sahne hinzufügen und mit Salz, Pfeffer und Muskatnuss abschmecken.
             7. Genießen!"""
-        generate_recipe("images/kürbissuppe.jpg", "Kürbissuppe",  kürbissuppe, "1", recipe_key="kürbissuppe")
+        generate_recipe("kürbissuppe.jpg", "Kürbissuppe",  kürbissuppe, "1", recipe_key="kürbissuppe")
 
     with col3:
         lammeintopf = """
@@ -351,7 +351,7 @@ if st.session_state['authentication_status']:
             4. Die weißen Bohnen hinzufügen und weitere 10 Minuten köcheln lassen.
             5. Mit Rosmarin, Salz und Pfeffer abschmecken.
             6. Genießen!"""
-        generate_recipe("images/Lammeintopf.jpg", "Lammeintopf", lammeintopf, "1", recipe_key="lammeintopf")
+        generate_recipe("Lammeintopf.jpg", "Lammeintopf", lammeintopf, "1", recipe_key="lammeintopf")
 
     with col4:
         schokokuchen = """
@@ -380,7 +380,7 @@ if st.session_state['authentication_status']:
             10. Sofort servieren, optional mit Puderzucker bestäubt oder mit einer Kugel Vanilleeis.
 
             Genießen Sie Ihren köstlichen Schokokuchen mit perfekt flüssigem Kern!"""
-        generate_recipe("images/schokokuchen.jpg", "Schokokuchen", schokokuchen, "1", recipe_key="schokokuchen")
+        generate_recipe("schokokuchen.jpg", "Schokokuchen", schokokuchen, "1", recipe_key="schokokuchen")
 
     show_selected_recipe1(button="button1")
 
@@ -409,7 +409,7 @@ if st.session_state['authentication_status']:
             2. Über Nacht im Kühlschrank ziehen lassen.
             3. Am nächsten Morgen mit den Beeren, gehackten Nüssen und Zimt garnieren.
             """
-        generate_recipe("images/oats.jpg","Overnight Oats", oats, "2", recipe_key="Overnight Oats mit Beeren")
+        generate_recipe("oats.jpg","Overnight Oats", oats, "2", recipe_key="Overnight Oats mit Beeren")
 
     with col6:
         avocadotoast = """
@@ -428,7 +428,7 @@ if st.session_state['authentication_status']:
             2. Das Vollkornbrot toasten und die Avocado darauf verteilen.
             3. Die Eier pochieren und auf den Avocado-Toast legen.
             4. Nach Belieben mit Chiliflocken bestreuen."""
-        generate_recipe("images/avocadotoast.jpg", "avocadotoast",  avocadotoast, "2", recipe_key="Avocado-Toast mit pochiertem Ei")
+        generate_recipe("avocadotoast.jpg", "avocadotoast",  avocadotoast, "2", recipe_key="Avocado-Toast mit pochiertem Ei")
 
     with col7:
         bananenpfannkuchen = """
@@ -449,7 +449,7 @@ if st.session_state['authentication_status']:
             3. Die Pfannkuchen auf beiden Seiten goldbraun braten.
             4. Mit Beeren oder Joghurt serviere!
             """
-        generate_recipe("images/pfannkuchen.jpg", "Bananenpfannkuchen", bananenpfannkuchen, "2", recipe_key="Bananen-Pfannkuchen")
+        generate_recipe("pfannkuchen.jpg", "Bananenpfannkuchen", bananenpfannkuchen, "2", recipe_key="Bananen-Pfannkuchen")
 
     with col8:
         chiapudding = """
@@ -468,7 +468,7 @@ if st.session_state['authentication_status']:
             2. Über Nacht im Kühlschrank quellen lassen.
             3. Mit frischen Früchten und gehackten Nüssen garnieren und genießen.
             """
-        generate_recipe("images/chia.jpg", "Chia-Pudding", chiapudding, "2", recipe_key="Chia-Pudding")
+        generate_recipe("chia.jpg", "Chia-Pudding", chiapudding, "2", recipe_key="Chia-Pudding")
 
     show_selected_recipe2(button="button2")
 
