@@ -428,7 +428,7 @@ if st.session_state['authentication_status']:
             2. Das Vollkornbrot toasten und die Avocado darauf verteilen.
             3. Die Eier pochieren und auf den Avocado-Toast legen.
             4. Nach Belieben mit Chiliflocken bestreuen."""
-        generate_recipe("avocadotoast.jpg", "avocadotoast",  avocadotoast, "2", recipe_key="Avocado-Toast mit pochiertem Ei")
+        generate_recipe("avocadotoast.jpg", "Avocadotoast",  avocadotoast, "2", recipe_key="Avocado-Toast mit pochiertem Ei")
 
     with col7:
         bananenpfannkuchen = """
