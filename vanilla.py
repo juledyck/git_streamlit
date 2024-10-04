@@ -5,6 +5,9 @@ import requests
 from streamlit_extras.let_it_rain import rain
 from ollama import chat
 
+st.set_page_config(layout="wide")
+# value = "zero"
+
 def random_emoji():
     emojis = ['🥯', '🥐', '🥘', '🍣', '🌯', '🥑', '🍖', '🍯', '🥗', '🔪']
     return random.choice(emojis)
@@ -17,11 +20,37 @@ def success():
         animation_length="5s",
     )
 
-def generate_recipe(jpeg, name, link):
+def generate_recipe(jpeg, name, recipe, recipe_key):
     st.image(jpeg)
     st.write(name)
-    st.markdown(f'<a href={link} target="_blank" style="color:gray; text-decoration:none;">View more ➜</a></p>',
+    if st.button(f"View more ➜", key=recipe_key):
+        st.session_state['selected_recipe'] = recipe
+
+def generate_own_recipe(jpeg, name, link):
+    st.image(jpeg)
+    st.write(name)
+    st.markdown(f"""
+    <div style="background-color: #FFDDC1; padding: 10px; border-radius: 5px;">
+    <h3 style="color: black;">Dein Rezept</h3>
+    <p>{link}</p>
+    </div>
+    """,
     unsafe_allow_html=True)
+
+def show_selected_recipe():
+    if 'selected_recipe' in st.session_state:
+        st.markdown("<hr>", unsafe_allow_html=True)
+
+        st.markdown(f"""
+        <div style="background-color: #FFDDC1; padding: 20px; border-radius: 10px;">
+            <h2 style="color: black;">Dein Rezept</h2>
+            <p>{st.session_state['selected_recipe']}</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+        st.write("\n")
+        if st.button("Schließen"):
+            del st.session_state['selected_recipe']
 
 def my_chat(model, messagi):
     if model == "llama3.2":
@@ -48,7 +77,7 @@ def my_chat(model, messagi):
                 data = json.loads(line[len("data: "):])
                 yield data["choices"][0]["delta"].get("content", "")
 
-    if model == "mistral":
+    if model == "mistral" or model == "mistral:7b-instruct-q3_K_M":
         messages = [
         {
             'role': 'user',
@@ -72,7 +101,7 @@ st.sidebar.title("Persönliche Anpassung")
 mahlzeit = st.sidebar.selectbox("Mahlzeit: ", ['Frühstück', 'Mittagessen', 'Abendessen', 'Dessert', 'Sonstiges'])
 personen = st.sidebar.slider("Personenzahl:", 1, 8)
 sprache = st.sidebar.selectbox("Sprache: ", ['Englisch', 'Deutsch', 'Französisch'])
-model = st.sidebar.selectbox("Sprachmodell: ", ['mistral', 'llama3.2', 'sonstiges'])
+model = st.sidebar.selectbox("Sprachmodell: ", ['mistral', 'llama3.2', 'mistral:7b-instruct-q3_K_M'])
 
 #Textinputfeld
 kategorien = st.multiselect("Kategorien: ", ['Ausgewogen', 'Low-Carb', 'Proteinreich', 'Vegan', 'Vegetarisch'])
@@ -88,123 +117,52 @@ recipe_container = st.empty()
 if(st.button("Enter")):
     
     englischtext = ""
-    prompt = f"""Please translate the following text to englisch word for word without any additional text. Don't give me a recipe yet.
-    Use these examples for how the output should look after an input:
-    
-    Example 1: 
-    Input: "Bitte erstelle mir ein Rezept mit einer Zutatenliste und einer Anleitung. Gebe dem Rezept außerdem einen Namen, der das Endergebnis möglichst gut anhand der Zutaten berschreibt. Das Rezept soll ein Abendessen für 4 Personen sein. Zudem soll es ['Low-Carb', 'Ausgewogen'] sein. Schreibe das Rezept einheitlich auf Englisch. Außerdem ist mir für mein Rezept wichtig, dass Möhren und Zucchinis verwendet werden. Ich besitze keinen Ofen."
-    Output: Please create a breakfast recipe for 4 people with a name that accurately describes the end result based on the ingredients. This dish should be low-carb and balanced. Give me a list of the ingredients and instructions which should be written in English. Additionally, carrots and zucchinis should be used in this recipe. I do not own an oven.
+    prompt = f"""
+        Please translate the following text to englisch word for word without any additional text. Don't give me a recipe yet.
+        Use these examples for how the output should look after an input:
+        
+        Example 1: 
+        Input: "Bitte erstelle mir ein Rezept mit einer Zutatenliste und einer Anleitung. Gebe dem Rezept außerdem einen Namen, der das Endergebnis möglichst gut anhand der Zutaten berschreibt. Das Rezept soll ein Abendessen für 4 Personen sein. Zudem soll es ['Low-Carb', 'Ausgewogen'] sein. Schreibe das Rezept einheitlich auf Englisch. Außerdem ist mir für mein Rezept wichtig, dass Möhren und Zucchinis verwendet werden. Ich besitze keinen Ofen."
+        Output: Please create a breakfast recipe for 4 people with a name that accurately describes the end result based on the ingredients. This dish should be low-carb and balanced. Give me a list of the ingredients and instructions which should be written in English. Additionally, carrots and zucchinis should be used in this recipe. I do not own an oven.
 
-    Example 2:
-    Input: "Bitte erstelle mir ein Rezept mit einer Zutatenliste und einer Anleitung. Gebe dem Rezept außerdem einen Namen, der das Endergebnis möglichst gut anhand der Zutaten berschreibt. Das Rezept soll ein Abendessen für 4 Personen sein. Zudem soll es ['Proteinreich'] sein. Schreibe das Rezept einheitlich auf Englisch. Außerdem ist mir für mein Rezept wichtig, dass es italienisch inspiriert ist. Ich möchte gerne Nudeln als Kohlenhydratquelle verwenden."
-    Output: Please create an evening meal recipe for 4 people with a name that accurately describes the end result based on the ingredients. This dish should be high in protein. Give me a list of the ingredients and instructions which should be written in English. Additionally, pasta (noodles) should be used as a source of carbohydrates. Furthermore, the recipe should be inspired by Italian cuisine.
+        Example 2:
+        Input: "Bitte erstelle mir ein Rezept mit einer Zutatenliste und einer Anleitung. Gebe dem Rezept außerdem einen Namen, der das Endergebnis möglichst gut anhand der Zutaten berschreibt. Das Rezept soll ein Abendessen für 4 Personen sein. Zudem soll es ['Proteinreich'] sein. Schreibe das Rezept einheitlich auf Englisch. Außerdem ist mir für mein Rezept wichtig, dass es italienisch inspiriert ist. Ich möchte gerne Nudeln als Kohlenhydratquelle verwenden."
+        Output: Please create an evening meal recipe for 4 people with a name that accurately describes the end result based on the ingredients. This dish should be high in protein. Give me a list of the ingredients and instructions which should be written in English. Additionally, pasta (noodles) should be used as a source of carbohydrates. Furthermore, the recipe should be inspired by Italian cuisine.
 
-    Example 3:
-    Input: "Bitte erstelle mir ein Rezept mit einer Zutatenliste und einer Anleitung. Gebe dem Rezept außerdem einen Namen, der das Endergebnis möglichst gut anhand der Zutaten berschreibt. Das Rezept soll ein Dessert für 4 Personen sein. Zudem soll es ['Low-Carb'] sein. Schreibe das Rezept einheitlich auf Englisch. Außerdem ist mir für mein Rezept wichtig, dass ich allergisch gegen Mandeln bin. Außerdem würde ich gerne etwas mit Schokolade machen."
-    Output: Please create a dessert recipe for 8 people with a name that accurately describes the end result based on the ingredients. This dish should be low-carb. Give me a list of the ingredients and instructions which should be written in English. Additionally, I am allergic to almonds. Furthermore, I would like to make something with chocolate.
+        Example 3:
+        Input: "Bitte erstelle mir ein Rezept mit einer Zutatenliste und einer Anleitung. Gebe dem Rezept außerdem einen Namen, der das Endergebnis möglichst gut anhand der Zutaten berschreibt. Das Rezept soll ein Dessert für 4 Personen sein. Zudem soll es ['Low-Carb'] sein. Schreibe das Rezept einheitlich auf Englisch. Außerdem ist mir für mein Rezept wichtig, dass ich allergisch gegen Mandeln bin. Außerdem würde ich gerne etwas mit Schokolade machen."
+        Output: Please create a dessert recipe for 8 people with a name that accurately describes the end result based on the ingredients. This dish should be low-carb. Give me a list of the ingredients and instructions which should be written in English. Additionally, I am allergic to almonds. Furthermore, I would like to make something with chocolate.
 
-    Input: "{text}"
-    """
+        Input: "{text}"
+        """
 
     englischtext = my_chat(model, prompt)
     tostring = "".join(englischtext)
-    recipe_prompt = f"""I want you to write me a recipe using a prompt with guidelines that I can use in a cookbook. Use these following examples for how the output should look after an input.
+    recipe_prompt = f"""
+        Please create a recipe following these exact instructions:
+        - The output should be only the recipe and nothing else.
+        - The recipe must include a clear title, ingredients list (with quantities), and step-by-step instructions.
+        - The output should not contain explanations, additional text, or information that is not part of the recipe.
 
-    Example 1:
-    Input: "Please create a dessert recipe for 8 people with a name that accurately describes the end result based on the ingredients. This dish should be low-carb. Give me a list of the ingredients and instructions which should be written in English. Additionally, I am allergic to almonds. Furthermore, I would like to make something with chocolate."
-    Output: 
-    
-    Chocolate Avocado Mousse
+        For example:
 
-    Ingredients (Serves 8):
-    - 4 ripe avocados
-    - 1/2 cup unsweetened cocoa powder
-    - 1/2 cup erythritol or your preferred low-carb sweetener
-    - 1/2 cup unsweetened coconut milk
-    - 1 teaspoon vanilla extract
-    - A pinch of salt
-    - Dark chocolate shavings (for garnish, optional)
-    - Fresh berries (for garnish, optional)
-    
-    Instructions:
-    1. Cut the avocados in half, remove the pits, and scoop the flesh into a food processor. Add the unsweetened cocoa powder, erythritol, coconut milk, vanilla extract, and a pinch of salt to the food processor.
-    2. Blend until the mixture is smooth and creamy, scraping down the sides as needed. Taste the mousse and adjust the sweetness if desired.
-    3. Spoon the mousse into individual serving dishes or a large bowl.
-    4. Chill in the refrigerator for at least 30 minutes to firm up.
-    5. Before serving, garnish with dark chocolate shavings and fresh berries if desired.
-    
-    Enjoy your rich and creamy Chocolate Avocado Mousse!
+        Chocolate Avocado Mousse
 
-    Example 2:
-    Input: "Please create an evening meal recipe for 4 people with a name that accurately describes the end result based on the ingredients. This dish should be high in protein. Give me a list of the ingredients and instructions which should be written in English. Additionally, pasta (noodles) should be used as a source of carbohydrates. Furthermore, the recipe should be inspired by Italian cuisine."
-    Output:
+        Ingredients (Serves 8):
+        - 4 ripe avocados
+        - 1/2 cup unsweetened cocoa powder
+        - 1/2 cup erythritol
+        - 1/2 cup unsweetened coconut milk
+        - 1 teaspoon vanilla extract
+        - A pinch of salt
 
-    High-Protein Italian Chicken Pasta Bake
+        Instructions:
+        1. Cut the avocados in half, remove the pits, and scoop the flesh into a food processor...
+        ...
+        Make sure the recipe follows this format. The recipe must be for {mahlzeit} for {personen} people, and should be {kategorien}. The recipe should be written in {sprache}.
 
-    Ingredients (Serves 4):
-    - 300g whole wheat pasta (e.g., penne or fusilli)
-    - 500g boneless, skinless chicken breast, diced
-    - 2 tablespoons olive oil
-    - 2 cloves garlic, minced
-    - 1 medium onion, chopped
-    - 1 red bell pepper, diced
-    - 1 can (400g) crushed tomatoes
-    - 1 teaspoon dried oregano
-    - 1 teaspoon dried basil
-    - Salt and pepper to taste
-    - 150g low-fat mozzarella cheese, shredded
-    - 50g grated Parmesan cheese
-    - Fresh basil leaves for garnish (optional)
-    
-    Instructions:
-    1. Preheat your oven to 200°C (400°F).
-    2. Bring a large pot of salted water to a boil. Add the whole wheat pasta and cook according to package instructions until al dente. Drain and set aside.
-    3. In a large skillet, heat the olive oil over medium heat. Add the diced chicken and season with salt and pepper. Cook for about 5-7 minutes, or until the chicken is browned and cooked through. Remove the chicken from the skillet and set aside.
-    4. In the same skillet, add the chopped onion, minced garlic, and diced red bell pepper. Sauté for about 5 minutes, until the vegetables are softened.
-    5. Add the crushed tomatoes, oregano, and basil to the skillet. Stir to combine and bring to a simmer. Add the cooked chicken and pasta to the skillet, mixing everything together.
-    6. Transfer the chicken and pasta mixture to a large baking dish. Spread it out evenly.
-    7. Sprinkle the shredded mozzarella and grated Parmesan cheese evenly over the top.
-    8. Bake in the preheated oven for 20-25 minutes, or until the cheese is melted and bubbly.
-    9. Remove from the oven and let it cool slightly. Garnish with fresh basil leaves if desired. Serve warm.
-
-    Enjoy your High-Protein Italian Chicken Pasta Bake! This dish is perfect for a fulfilling evening meal packed with protein and delicious Italian flavors.
-
-    Example 3:
-    Input: "Please create a breakfast recipe for 4 people with a name that accurately describes the end result based on the ingredients. This dish should be vegetarian balanced. Give me a list of the ingredients and instructions which should be written in English. Additionally, oats should be used in this recipe. I do not own an oven. Please also add nutrional information per serving."
-    Output:
-    
-    Creamy Oatmeal with Fresh Fruits and Nuts
-
-    Ingredients (Serves 4):
-    - 1 cup rolled oats
-    - 4 cups water or plant-based milk (such as almond milk or soy milk)
-    - 2 tablespoons maple syrup or honey (optional)
-    - 1 teaspoon vanilla extract
-    - 1 teaspoon cinnamon
-    - 1 cup mixed fresh fruits (such as berries, bananas, or apples)
-    - 1/2 cup chopped nuts (such as walnuts, almonds, or pecans)
-    - 1/4 cup yogurt (optional for serving)
-    - Pinch of salt
-    
-    Instructions
-    1. In a large saucepan, combine the rolled oats, water (or plant-based milk), and a pinch of salt. Bring to a boil over medium heat.
-    Once boiling, reduce the heat to low and simmer for about 5-10 minutes, stirring occasionally, until the oats are soft and have absorbed most of the liquid.
-    2. Stir in the maple syrup (or honey), vanilla extract, and cinnamon. Cook for an additional 1-2 minutes until well combined and creamy.
-    3. While the oats are cooking, chop the mixed fresh fruits and nuts.
-    4. Divide the creamy oatmeal among four bowls. Top each bowl with fresh fruits, chopped nuts, and a dollop of yogurt if desired.
-    5. Serve warm and enjoy your nutritious breakfast!
-    
-    Nutritional Information (per serving):
-    Calories: 290
-    Protein: 9g
-    Fat: 10g
-    Carbohydrates: 42g
-    
-    This recipe provides a balanced meal with healthy fats, fiber, and protein, making it a great start to your day! Enjoy your creamy oatmeal!
-
-    This is the prompt you should use: "{tostring}"
-    """
-
+        Input: {text}
+        """
     recipe = ""
 
     for part in my_chat(model, recipe_prompt):
@@ -218,28 +176,64 @@ if(st.button("Enter")):
             </div>
             """,
             unsafe_allow_html=True)
-        else:
-            tostring2 = "".join(recipe)
-            translate_prompt = f"""Please translate the following text to {sprache}.
+    if sprache == "Deutsch":
+        tostring2 = "".join(recipe)
+        print(tostring2)
+        translate_prompt = f"""
+            Please translate the following recipe to {sprache}, keeping the structure and formatting intact. Here's an example of how the translation should look:
+            Example Input (English):
+            "Chocolate Avocado Mousse
+
+            Ingredients (Serves 8):
+            - 4 ripe avocados
+            - 1/2 cup unsweetened cocoa powder
+            - 1/2 cup erythritol
+            - 1/2 cup unsweetened coconut milk
+            - 1 teaspoon vanilla extract
+            - A pinch of salt
+
+            Instructions:
+            1. Cut the avocados in half, remove the pits, and scoop the flesh into a food processor...
+            2. Blend until smooth and creamy.
+            3. Chill in the refrigerator for at least 30 minutes before serving.
+            4. Garnish with berries if desired."
+
+            Example Output ({sprache}):
+            "Schokoladen-Avocado-Mousse
+
+            Zutaten (für 8 Personen):
+            - 4 reife Avocados
+            - 1/2 Tasse ungesüßtes Kakaopulver
+            - 1/2 Tasse Erythrit
+            - 1/2 Tasse ungesüßte Kokosmilch
+            - 1 Teelöffel Vanilleextrakt
+            - Eine Prise Salz
+
+            Zubereitung:
+            1. Die Avocados halbieren, die Kerne entfernen und das Fruchtfleisch in einen Mixer geben...
+            2. Mixen, bis die Masse glatt und cremig ist.
+            3. Vor dem Servieren mindestens 30 Minuten im Kühlschrank kühlen.
+            4. Nach Wunsch mit Beeren garnieren."
+
+            Now, translate this recipe: {recipe}
             """
-            translate_recipe = ""
-            for d in my_chat(model, translate_prompt):
-                translate_recipe += d
-                recipe_container.markdown(
-                f"""
-                <div style="background-color: #FFDDC1; padding: 10px; border-radius: 5px;">
-                    <h3 style="color: black;">Dein Rezept</h3>
-                    <p>{translate_recipe}</p>
-                </div>
-                """,
-                unsafe_allow_html=True)
+        translate_recipe = ""
+        for d in my_chat(model, translate_prompt):
+            translate_recipe += d
+            recipe_container.markdown(
+            f"""
+            <div style="background-color: #FFDDC1; padding: 10px; border-radius: 5px;">
+                <h3 style="color: black;">Dein Rezept</h3>
+                <p>{translate_recipe}</p>
+            </div>
+            """,
+            unsafe_allow_html=True)
     success()
     if(st.download_button(label="Speichern", data = recipe, file_name="mein_rezept.txt")):
         success()
 
 
 st.header("Rezeptbuch")
-st.write("Staples")
 st.markdown(
     "<hr style='border: 2.5px solid #800000;'>",
     unsafe_allow_html=True
@@ -248,16 +242,189 @@ st.markdown(
 col1, cola, col2, colb, col3, colc, col4 = st.columns([3, 1, 3, 1, 3, 1, 3])
 
 with col1:
-    generate_recipe("hackpfanne.jpg","Hackpfanne", "https://www.chefkoch.de/rezepte/")
+    hackpfanne = """
+        Arnes Hackpfanne
+
+        Zutaten für 4 Portionen:
+        - 500 g Hackfleisch
+        - 2 Zucchinis
+        - 4 Möhren
+        - 1 große Zwiebel
+        - Knoblauch
+        - 250 g Basmati Reis
+        - Sojasauce, Salz, Pfeffer, Paprika, Schwarzkümmel, weitere Gewürze nach Wahl
+
+        Anleitung:
+        1. Den Reis kochen.
+        2. Parallel in einer Pfanne Öl scharf erhitzen und Zwiebeln, Knoblauch und Hack dazugeben.
+        3. Gemüse nach Wassergehalt hinzugeben, von weniger zu mehr.
+        4. Optional Sojasauce, Gemüsebrühe oder Fleischbrühe hinzugeben.
+        5. Würzen und vom Herd nehmen, bevor das Gemüse matschig wird.
+        6. Genießen!"""
+    generate_recipe("hackpfanne.jpg","Hackpfanne", hackpfanne, recipe_key="Hackpfanne")
 
 with col2:
-    generate_recipe("kürbissuppe.jpg", "Kürbissuppe", "https://www.chefkoch.de/rezepte/")
+    kürbissuppe = """
+
+        Zutaten für 4 Portionen:
+        - 1 Hokkaido-Kürbis
+        - 1 Zwiebel
+        - 2 Knoblauchzehen
+        - 500 ml Gemüsebrühe
+        - 100 ml Sahne
+        - Salz, Pfeffer, Muskatnuss
+
+        Anleitung:
+        1. Den Kürbis waschen, entkernen und in Würfel schneiden.
+        2. Zwiebel und Knoblauch hacken und in einem großen Topf andünsten.
+        3. Kürbis hinzugeben und kurz mitdünsten.
+        4. Gemüsebrühe hinzugeben und alles ca. 20 Minuten köcheln lassen.
+        5. Mit einem Pürierstab die Suppe cremig pürieren.
+        6. Sahne hinzufügen und mit Salz, Pfeffer und Muskatnuss abschmecken.
+        7. Genießen!"""
+    generate_recipe("kürbissuppe.jpg", "Kürbissuppe",  kürbissuppe, recipe_key="kürbissuppe")
 
 with col3:
-    generate_recipe("Lammeintopf.jpg", "Lammeintopf mit weißen Bohnen", "https://www.chefkoch.de/rezepte/")
+    lammeintopf = """
+        Lammeintopf mit weißen Bohnen
+
+        Zutaten für 4 Portionen:
+        - 600 g Lammfleisch
+        - 1 Dose weiße Bohnen
+        - 2 Karotten
+        - 1 Zwiebel
+        - 2 Knoblauchzehen
+        - 500 ml Lammbrühe
+        - Rosmarin, Salz, Pfeffer
+
+        Anleitung:
+        1. Das Lammfleisch in Würfel schneiden und in einem großen Topf anbraten.
+        2. Zwiebel, Knoblauch und Karotten hinzugeben und mitdünsten.
+        3. Die Lammbrühe hinzugeben und alles etwa 1 Stunde köcheln lassen.
+        4. Die weißen Bohnen hinzufügen und weitere 10 Minuten köcheln lassen.
+        5. Mit Rosmarin, Salz und Pfeffer abschmecken.
+        6. Genießen!"""
+    generate_recipe("Lammeintopf.jpg", "Lammeintopf", lammeintopf, recipe_key="lammeintopf")
 
 with col4:
-    generate_recipe("schokokuchen.jpg", "Schokokuchen", "https://www.chefkoch.de/rezepte/")
+    schokokuchen = """
+        Schokokuchen mit flüssigem Kern
 
+        Zutaten (Für 4 Portionen):
+        - 200g Zartbitterschokolade (70% Kakao)
+        - 100g ungesalzene Butter, plus etwas mehr zum Einfetten
+        - 2 große Eier
+        - 2 große Eigelbe
+        - 50g Zucker
+        - 20g Mehl
+        - Eine Prise Salz
+        - Kakaopulver (zum Bestäuben)
 
-st.link_button("View more", 'https://www.chefkoch.de/rezepte/', help=None, type="secondary", disabled=False, use_container_width=False)
+        Zubereitung:
+        1. Den Ofen auf 200°C vorheizen. 4 Förmchen (Ramekins) mit Butter einfetten und mit Kakaopulver bestäuben. Zur Seite stellen.
+        2. Die Zartbitterschokolade und Butter in einer hitzebeständigen Schüssel über einem Wasserbad (Doppelkocher-Methode) schmelzen. Gelegentlich umrühren, bis die Masse glatt ist.
+        3. In einer separaten Schüssel die Eier, Eigelbe und Zucker verquirlen, bis die Mischung blass und dickflüssig wird.
+        4. Vorsichtig die geschmolzene Schokoladenmischung unter die Ei-Zucker-Mischung heben.
+        5. Das Mehl und eine Prise Salz über den Teig sieben und vorsichtig unterheben, bis alles gut vermischt ist.
+        6. Die Mischung gleichmäßig auf die vorbereiteten Förmchen verteilen.
+        7. 10-12 Minuten backen. Die Ränder sollten fest sein, aber die Mitte weich bleiben.
+        8. Aus dem Ofen nehmen und 1 Minute abkühlen lassen. Mit einem Messer vorsichtig an den Rändern entlangfahren, um die Kuchen zu lösen.
+        9. Die Kuchen auf Teller stürzen und die Förmchen vorsichtig entfernen.
+        10. Sofort servieren, optional mit Puderzucker bestäubt oder mit einer Kugel Vanilleeis.
+
+        Genießen Sie Ihren köstlichen Schokokuchen mit perfekt flüssigem Kern!"""
+    generate_recipe("schokokuchen.jpg", "Schokokuchen", schokokuchen, recipe_key="schokokuchen")
+
+show_selected_recipe()
+
+st.markdown(
+    "<hr style='border: 2.5px solid #800000;'>",
+    unsafe_allow_html=True
+)
+
+col5, cold, col6, cole, col7, colf, col8 = st.columns([3, 1, 3, 1, 3, 1, 3])
+
+with col5:
+    oats = """
+        Overnight Oats mit Beeren
+
+        Zutaten (für 4 Portionen):
+        - 2 Tassen Haferflocken
+        - 2 Tassen Mandelmilch (oder jede andere pflanzliche Milch)
+        - 2 EL Chiasamen
+        - 2 TL Honig oder Ahornsirup (optional)
+        - 200g gemischte Beeren (z.B. Heidelbeeren, Erdbeeren, Himbeeren)
+        - 2 EL gehackte Mandeln oder Nüsse nach Wahl
+        - 2 TL Zimt (optional)
+        
+        Zubereitung:
+        1. Die Haferflocken, Chiasamen, Mandelmilch und den Honig/Ahornsirup in einer großen Schüssel vermischen.
+        2. Über Nacht im Kühlschrank ziehen lassen.
+        3. Am nächsten Morgen mit den Beeren, gehackten Nüssen und Zimt garnieren.
+        """
+    generate_recipe("oats.jpg","Overnight Oats", oats, recipe_key="Overnight Oats mit Beeren")
+
+with col6:
+    avocadotoast = """
+        Avocado-Toast mit pochiertem Ei
+
+        Zutaten (für 4 Portionen):
+        - 4 Scheiben Vollkornbrot
+        - 2 reife Avocados
+        - 4 Eier
+        - Ein Spritzer Zitronensaft
+        - Salz und Pfeffer
+        - Chiliflocken (optional)
+        
+        Zubereitung:
+        1. Die Avocados mit einer Gabel zerdrücken und mit Zitronensaft, Salz und Pfeffer würzen.
+        2. Das Vollkornbrot toasten und die Avocado darauf verteilen.
+        3. Die Eier pochieren und auf den Avocado-Toast legen.
+        4. Nach Belieben mit Chiliflocken bestreuen."""
+    generate_recipe("avocadotoast.jpg", "avocadotoast",  avocadotoast, recipe_key="Avocado-Toast mit pochiertem Ei")
+
+with col7:
+    bananenpfannkuchen = """
+        Bananen-Pfannkuchen:
+
+        Zutaten (für 4 Portionen):
+        - 4 reife Bananen
+        - 4 Eier
+        - 1/2 Tasse Haferflocken
+        - 2 TL Backpulver
+        - 2 TL Zimt
+        - Kokosöl zum Braten
+        - Frische Beeren oder Joghurt zum Garnieren
+        
+        Zubereitung:
+        1. Die Bananen in einer Schüssel zerdrücken. Eier, Haferflocken, Backpulver und Zimt hinzufügen und gut vermischen.
+        2. Eine Pfanne mit etwas Kokosöl erhitzen und den Teig portionsweise hineingeben.
+        3. Die Pfannkuchen auf beiden Seiten goldbraun braten.
+        4. Mit Beeren oder Joghurt serviere!
+        """
+    generate_recipe("pfannkuchen.jpg", "Bananenpfannkuchen", bananenpfannkuchen, recipe_key="Bananen-Pfannkuchen")
+
+with col8:
+    chiapudding = """
+        Chia-Pudding
+
+        Zutaten (für 4 Portionen):
+        - 8 EL Chiasamen
+        - 500 ml Mandelmilch (oder jede andere pflanzliche Milch)
+        - 2 TL Vanilleextrakt
+        - 2 TL Honig oder Ahornsirup
+        - 200g frische Früchte (z.B. Erdbeeren, Blaubeeren)
+        - 2 EL gehackte Nüsse oder Mandeln
+
+        Zubereitung:
+        1. Die Chiasamen, Mandelmilch, Vanilleextrakt und Honig/Ahornsirup in einer Schüssel gut vermischen.
+        2. Über Nacht im Kühlschrank quellen lassen.
+        3. Mit frischen Früchten und gehackten Nüssen garnieren und genießen.
+        """
+    generate_recipe("chia.jpg", "Chia-Pudding", chiapudding, recipe_key="Chia-Pudding")
+
+if st.button("View more"):
+    st.markdown(
+    "<hr style='border: 2.5px solid #800000;'>",
+    unsafe_allow_html=True
+    )
