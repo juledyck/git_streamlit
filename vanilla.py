@@ -78,7 +78,7 @@ def show_selected_recipe1(button):
         st.markdown(f"""
         <div style="background-color: #FFDDC1; padding: 20px; border-radius: 10px;">
             <h2 style="color: black;">Dein Rezept</h2>
-            <p>{st.session_state['selected_recipe1']}</p>
+            <p>{st.session_state['selected_recipe1']}
         </div>
         """, unsafe_allow_html=True)
 
@@ -95,7 +95,7 @@ def show_selected_recipe2(button):
         st.markdown(f"""
         <div style="background-color: #FFDDC1; padding: 20px; border-radius: 10px;">
             <h2 style="color: black;">Dein Rezept</h2>
-            <p>{st.session_state['selected_recipe2']}</p>
+            <p>{st.session_state['selected_recipe2']}
         </div>
         """, unsafe_allow_html=True)
         
